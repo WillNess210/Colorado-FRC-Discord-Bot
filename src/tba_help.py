@@ -39,7 +39,7 @@ class TBA_Watcher:
             for match in [Match(event, match) for match in self.tba.event_matches(event_key)]:
                 selected_teams = match.teamsInMatch(self.teams)
                 if len(selected_teams) > 0 and not match.isFinished():
-                    print("Checking:", match.key, match.minutesTillStart())
+                    print("Checking:", match.key, match.minutesTillStart(), match.predicted_time)
                 if len(selected_teams) > 0 and match.isWithinWarningTime() and match.key not in self.matches_announced:
                     self.matches_announced.append(match.key)
                     print("Upcoming match:", match.key)
@@ -53,7 +53,7 @@ class TBA_Watcher:
 
 class Match:
     def __init__(self, event_object, match_object):
-        self.predicted_time = match_object.predicted_time
+        self.predicted_time = match_object.time
         self.match_finished = match_object.actual_time != None
         self.key = match_object.key
         self.event_name = event_object.short_name #also can try .name
@@ -80,7 +80,9 @@ class Match:
         return self.match_finished
 
     def minutesTillStart(self):
-        return (int(self.predicted_time) - int(time.time()))/60 - 120
+        val = (int(self.predicted_time) - time.time())/60
+        print(self.predicted_time, "-", time.time(), "=", val)
+        return val
 
     def isWithinWarningTime(self):
         return not self.isFinished() and self.minutesTillStart() <= WARNING_MINUTES
