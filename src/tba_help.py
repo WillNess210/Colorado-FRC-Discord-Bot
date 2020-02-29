@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 
 YEAR = 2020
-WARNING_MINUTES = 30
+WARNING_MINUTES = 40
 
 class TBA_Teams_List_Generator:
     def __init__(self, auth_key):
@@ -38,6 +38,8 @@ class TBA_Watcher:
         for event, event_key in zip(self.events, self.event_keys):
             for match in [Match(event, match) for match in self.tba.event_matches(event_key)]:
                 selected_teams = match.teamsInMatch(self.teams)
+                if len(selected_teams) > 0 and not match.isFinished():
+                    print("Checking:", match.key, match.minutesTillStart())
                 if len(selected_teams) > 0 and match.isWithinWarningTime() and match.key not in self.matches_announced:
                     self.matches_announced.append(match.key)
                     print("Upcoming match:", match.key)
@@ -66,15 +68,19 @@ class Match:
         self.red_teams = [key for key in match_object.alliances['red']['team_keys']]
         self.blue_teams = [key for key in match_object.alliances['blue']['team_keys']]
         self.winner = match_object.winning_alliance if self.isFinished() else None
-        self.red_score = match_object.score_breakdown["red"]["totalPoints"] if self.isFinished() else None
-        self.blue_score = match_object.score_breakdown["blue"]["totalPoints"] if self.isFinished() else None
+        if 'score_breakdown' in match_object and match_object.score_breakdown != None and 'red' in match_object.score_breakdown and 'blue' in match_object.score_breakdown and 'totalPoints' in match_object.score_breakdown['red'] and 'totalPoints' in match_object.score_breakdown['blue']:
+            self.red_score = match_object.score_breakdown["red"]["totalPoints"] if self.isFinished() else None
+            self.blue_score = match_object.score_breakdown["blue"]["totalPoints"] if self.isFinished() else None
+        else:
+            self.red_score = "Not Found"
+            self.blue_score = "Not Found"
         
 
     def isFinished(self):
         return self.match_finished
 
     def minutesTillStart(self):
-        return (int(self.predicted_time) - int(time.time()))/60
+        return (int(self.predicted_time) - int(time.time()))/60 - 120
 
     def isWithinWarningTime(self):
         return not self.isFinished() and self.minutesTillStart() <= WARNING_MINUTES
