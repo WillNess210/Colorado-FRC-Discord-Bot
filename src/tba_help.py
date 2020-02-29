@@ -45,9 +45,16 @@ class TBA_Watcher:
         for team, event_key in zip(teams, teams_event_keys):
             status.append(self.tba.team_status(team, event_key).overall_status_str.replace("<b>", "**").replace("</b>", "**"))
             event_names.append(self.tba.event(event_key, simple=True).name)
+        # generate event -> [status] dict
+        event_statuses = {}
+        for status, event_name in zip(status, event_names):
+            if event_name in event_statuses:
+                event_statuses[event_name].append(status)
+            else:
+                event_statuses[event_name] = [status]
         embed=discord.Embed(title="Current Team Status:")
-        for team, status, event_name in zip([a[3:] for a in teams], status, event_names):
-            embed.add_field(name=team + " - " + event_name, value=status, inline=False)
+        for event_name in event_statuses:
+            embed.add_field(name=event_name, value="\n\n".join(event_statuses[event_name]), inline=False)
         if last_update_data != None:
             cur_update_data = (teams, status, event_names)
             foundAnyDifferent = False
