@@ -21,7 +21,7 @@ class FRCBot(discord.Client):
         # Make sure the bot doesn't reply to itself.
         if message.author == client.user:
             return
-        if message.content == "!status":
+        if message.content == "!status" and message.channel.id in Secrets.match_stream_channels:
             print("received status request")
             self.printStatus = True
         return
