@@ -98,7 +98,7 @@ class Match:
         self.match_key = match_object.key
         match_types = {'qm': 'Quals', 'ef': 'Eight-Finals', 'qf': 'Quarterfinals', 'sf': 'Semifinals', 'f': 'Finals'}
         self.match_name = match_types[match_object.comp_level]
-        if match_object.comp_level in ['qf', 'sf', 'f']:
+        if match_object.comp_level in ['qf', 'sf']:
             self.match_name += " {} Match {}".format(match_object.set_number, match_object.match_number)
         else:
             self.match_name += " Match {}".format(match_object.match_number)
