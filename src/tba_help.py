@@ -30,22 +30,52 @@ class TBA_Watcher:
         self.matches_announced = [match for match in self.matches_announced if match.event_key in self.event_keys]
         self.match_results_announced = [match for match in self.match_results_announced if match.event_key in self.event_keys]
 
+    # return team updates to send back
+    def getTeamUpdates(self, last_update_data = None):
+        teams = []
+        teams_event_keys = []
+        for team in self.teams:
+            for match in self.match_results_announced + self.match_results_announced:
+                if team in match.red_teams or team in match.blue_teams:
+                    teams.append(team)
+                    teams_event_keys.append(match.event_key)
+                    break
+        status = []
+        event_names = []
+        for team, event_key in zip(teams, teams_event_keys):
+            status.append(self.tba.team_status(team, event_key).overall_status_str.replace("<b>", "**").replace("</b>", "**"))
+            event_names.append(self.tba.event(event_key, simple=True).name)
+        embed=discord.Embed(title="Current Team Status:")
+        for team, status, event_name in zip([a[3:] for a in teams], status, event_names):
+            embed.add_field(name=team + " - " + event_name, value=status, inline=False)
+        if last_update_data != None:
+            cur_update_data = (teams, status, event_names)
+            foundAnyDifferent = False
+            for i in range(len(cur_update_data)):
+                for last_data, cur_data in zip(last_update_data[i], cur_update_data[i]):
+                    if last_data != cur_data:
+                        foundAnyDifferent = True
+                        break
+            if not foundAnyDifferent:
+                return None, cur_update_data
+        return embed, (teams, status, event_names)
+
     # return list of embeds to send back
-    def getUpdates(self, channel):
+    def getUpdates(self):
         resp = []
         if datetime.today().strftime('%Y-%m-%d') != self.last_refreshed:
             self.refreshNewEvents()
         for event, event_key in zip(self.events, self.event_keys):
             for match in [Match(event, match) for match in self.tba.event_matches(event_key)]:
                 selected_teams = match.teamsInMatch(self.teams)
-                if len(selected_teams) > 0 and not match.isFinished():
-                    print("Checking:", match.key, match.minutesTillStart(), match.predicted_time)
-                if len(selected_teams) > 0 and match.isWithinWarningTime() and match.key not in self.matches_announced:
-                    self.matches_announced.append(match.key)
+                #if len(selected_teams) > 0 and not match.isFinished():
+                    #print("Checking:", match.key, match.minutesTillStart(), match.predicted_time)
+                if len(selected_teams) > 0 and match.isWithinWarningTime() and match.key not in [match.key for match in self.matches_announced]:
+                    self.matches_announced.append(match)
                     print("Upcoming match:", match.key)
                     resp.append(match.generateEmbed(self.teams))
-                elif len(selected_teams) > 0 and match.isFinished() and match.key not in self.match_results_announced:
-                    self.match_results_announced.append(match.key)
+                elif len(selected_teams) > 0 and match.isFinished() and match.key not in [match.key for match in self.match_results_announced]:
+                    self.match_results_announced.append(match)
                     print("Finished match:", match.key)
                     resp.append(match.generateEmbed(self.teams))
         return resp
@@ -53,7 +83,7 @@ class TBA_Watcher:
 
 class Match:
     def __init__(self, event_object, match_object):
-        self.predicted_time = match_object.time
+        self.predicted_time = match_object.predicted_time
         self.match_finished = match_object.actual_time != None
         self.key = match_object.key
         self.event_name = event_object.short_name #also can try .name
@@ -81,7 +111,7 @@ class Match:
 
     def minutesTillStart(self):
         val = (int(self.predicted_time) - time.time())/60
-        print(self.predicted_time, "-", time.time(), "=", val)
+        #print(self.predicted_time, "-", time.time(), "=", val)
         return val
 
     def isWithinWarningTime(self):

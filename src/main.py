@@ -2,15 +2,17 @@ import discord
 import asyncio
 from secrets import Secrets
 from tba_help import TBA_Watcher, TBA_Teams_List_Generator
-
+from time import time
 
 SECRET_FILENAME = '/src/secret.txt'
 REFRESH_RATE = 180 # seconds
+TEAM_SUMMARY_REFRESH_RATE = 60 * 30 #seconds
 
 class FRCBot(discord.Client):
 
     def __init__(self, **options):
         super().__init__(**options)
+        self.printStatus = True
 
     async def on_ready(self):
         print('Colorado Bot Online')
@@ -19,6 +21,9 @@ class FRCBot(discord.Client):
         # Make sure the bot doesn't reply to itself.
         if message.author == client.user:
             return
+        if message.content == "!status":
+            print("received status request")
+            self.printStatus = True
         return
 
 
@@ -41,12 +46,23 @@ async def my_background_task(client):
     tba_watcher = TBA_Watcher(Secrets.tba_auth_key, colorado_teams)
     for channel in channels:
         await channel.send("Bot starting up.")
+    last_team_summary = -1
+    update_data = None
     while True:
-        new_embeds = tba_watcher.getUpdates(channel)
+        new_embeds = tba_watcher.getUpdates()
         for channel in channels:
             for embed in new_embeds:
                 await channel.send(embed=embed)
-                await asyncio.sleep(1) # wait 1 second between every message
+                await asyncio.sleep(0.5) # wait 1 second between every message
+        if time() - last_team_summary > TEAM_SUMMARY_REFRESH_RATE or client.printStatus:
+            last_team_summary = time()
+            summary, update_data = tba_watcher.getTeamUpdates(last_update_data=(None if client.printStatus else update_data))
+            client.printStatus = False
+            if summary != None:
+                for channel in channels:
+                    await channel.send(embed=summary)
+            else:
+                print("suppressed status print - no changes")
         await asyncio.sleep(20) # task runs every 60 seconds
 
 if __name__ == '__main__':
