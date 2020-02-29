@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 
 YEAR = 2020
-WARNING_MINUTES = 40
+WARNING_MINUTES = 15
 
 class TBA_Teams_List_Generator:
     def __init__(self, auth_key):

@@ -54,7 +54,7 @@ async def my_background_task(client):
             for embed in new_embeds:
                 await channel.send(embed=embed)
                 await asyncio.sleep(0.5) # wait 1 second between every message
-        if time() - last_team_summary > TEAM_SUMMARY_REFRESH_RATE or client.printStatus:
+        if len(tba_watcher.events) > 0 and (time() - last_team_summary > TEAM_SUMMARY_REFRESH_RATE or client.printStatus):
             last_team_summary = time()
             summary, update_data = tba_watcher.getTeamUpdates(last_update_data=(None if client.printStatus else update_data))
             client.printStatus = False
@@ -63,6 +63,9 @@ async def my_background_task(client):
                     await channel.send(embed=summary)
             else:
                 print("suppressed status print - no changes")
+        elif len(tba_watcher.events) == 0 and client.printStatus:
+            client.printStatus = False
+            await channel.send("No teams currently in events.")
         await asyncio.sleep(20) # task runs every 60 seconds
 
 if __name__ == '__main__':
