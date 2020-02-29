@@ -34,16 +34,19 @@ def get_secrets():
 
 async def my_background_task(client):
     await client.wait_until_ready()
-    channel = client.get_channel(Secrets.match_stream_channel)
+    channels = [client.get_channel(ch) for ch in Secrets.match_stream_channels]
     list_gen = TBA_Teams_List_Generator(Secrets.tba_auth_key)
     colorado_teams = list_gen.getTeamsFromState("Colorado")
     print(colorado_teams)
     tba_watcher = TBA_Watcher(Secrets.tba_auth_key, colorado_teams)
-    await channel.send("Bot starting up.")
+    for channel in channels:
+        await channel.send("Bot starting up.")
     while True:
         new_embeds = tba_watcher.getUpdates(channel)
-        for embed in new_embeds:
-            await channel.send(embed=embed)
+        for channel in channels:
+            for embed in new_embeds:
+                await channel.send(embed=embed)
+                await asyncio.sleep(1) # wait 1 second between every message
         await asyncio.sleep(20) # task runs every 60 seconds
 
 if __name__ == '__main__':
