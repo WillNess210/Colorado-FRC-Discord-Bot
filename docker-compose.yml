@@ -1,0 +1,6 @@
+version: '3'
+services:
+  colorado-frc-bot:
+    build: .
+    volumes:
+     - ./src:/src
