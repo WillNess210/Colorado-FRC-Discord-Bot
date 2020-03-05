@@ -91,6 +91,8 @@ class TBA_Watcher:
 class Match:
     def __init__(self, event_object, match_object):
         self.predicted_time = match_object.predicted_time
+        if self.predicted_time == None:
+            self.predicted_time = match_object.time if match_object.time != None else int(time.time() + 60 * 30)
         self.match_finished = match_object.actual_time != None
         self.key = match_object.key
         self.event_name = event_object.short_name #also can try .name
