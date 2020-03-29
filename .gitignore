@@ -2,3 +2,5 @@
 secret.txt
 __pycache__
 *.pem
+frc-mc-srvr
+env/*

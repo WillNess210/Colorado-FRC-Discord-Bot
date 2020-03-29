@@ -3,6 +3,7 @@ import asyncio
 from secrets import Secrets
 from tba_help import TBA_Watcher, TBA_Teams_List_Generator
 from time import time
+from frcpy import TBA_Request
 
 SECRET_FILENAME = '/src/secret.txt'
 REFRESH_RATE = 180 # seconds
@@ -71,6 +72,8 @@ async def my_background_task(client):
 if __name__ == '__main__':
     Secrets.set_secrets(*get_secrets())
 
+    tbar = TBA_Request(Secrets.tba_auth_key)
+    
     client = FRCBot()
     client.loop.create_task(my_background_task(client))
     client.run(Secrets.bot_secret)

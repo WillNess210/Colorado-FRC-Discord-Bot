@@ -7,4 +7,6 @@ COPY ./src /src
 
 RUN pip install -r /src/requirements.txt
 
-CMD python -u /src/main.py
+RUN git clone https://github.com/WillNess210/frcpy /usr/local/lib/python3.8/site-packages/frcpy
+
+CMD python -u /src/main2.py
